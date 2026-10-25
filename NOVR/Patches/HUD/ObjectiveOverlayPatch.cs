@@ -2,6 +2,7 @@ using System.Reflection;
 using HarmonyLib;
 using NOVR.PatchHelper;
 using NOVR.VrUi.HarmonyPatches;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +15,6 @@ internal static class ObjectiveOverlayPatch
     private static readonly FieldInfo SizeIndicatorField = AccessTools.Field(typeof(ObjectiveOverlay), "sizeIndicator");
     private static readonly FieldInfo ObjectiveInfoField = AccessTools.Field(typeof(ObjectiveOverlay), "objectiveInfo");
     private static readonly FieldInfo PointerTailField = AccessTools.Field(typeof(ObjectiveOverlay), "pointerTail");
-    private static readonly FieldInfo BaseColorField = AccessTools.Field(typeof(ObjectiveOverlay), "baseColor");
     private static readonly FieldInfo HiddenField = AccessTools.Field(typeof(ObjectiveOverlay), "hidden");
 
     [PatchPrefix(typeof(ObjectiveOverlay), nameof(ObjectiveOverlay.UpdateOverlay))]
@@ -28,9 +28,8 @@ internal static class ObjectiveOverlayPatch
         var objectivePointer = (Image)ObjectivePointerField.GetValue(__instance);
         var objectiveDot = (Image)ObjectiveDotField.GetValue(__instance);
         var sizeIndicator = (Image)SizeIndicatorField.GetValue(__instance);
-        var objectiveInfo = (Text)ObjectiveInfoField.GetValue(__instance);
+        var objectiveInfo = (TMP_Text)ObjectiveInfoField.GetValue(__instance);
         var pointerTail = (Transform)PointerTailField.GetValue(__instance);
-        var baseColor = (Color)BaseColorField.GetValue(__instance);
 
         if (objectivePointer == null || objectiveDot == null || sizeIndicator == null || objectiveInfo == null || pointerTail == null)
             return true;
@@ -74,7 +73,9 @@ internal static class ObjectiveOverlayPatch
         sizeIndicator.transform.localScale = Vector3.one * (35f * range * invDistance);
         var sizeRangeFactor = range * 20f * invDistance - 0.5f;
         sizeIndicator.transform.localEulerAngles = Vector3.forward * sizeRangeFactor * 3f;
-        sizeIndicator.color = baseColor * Mathf.Clamp01(sizeRangeFactor);
+        var sizeColor = sizeIndicator.color;
+        sizeColor.a = Mathf.Clamp01(sizeRangeFactor);
+        sizeIndicator.color = sizeColor;
         sizeIndicator.transform.position = objectivePointer.transform.position;
 
         var label = result.Objective?.SavedObjective.DisplayName ?? "Waypoint";
